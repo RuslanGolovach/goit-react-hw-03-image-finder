@@ -1,25 +1,89 @@
-import logo from './logo.svg';
-import './App.css';
+import React, { Component } from 'react';
+import styles from './App.module.css';
+import imagesApi from './services/imagesApi';
+import Searchbar from './components/Searchbar';
+import ImageGallery from './components/ImageGallery';
+import Button from './components/Button';
+import PreLoader from './components/Loader';
+import Modal from './components/Modal';
 
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+class App extends Component {
+  state = {
+    images: [],
+    page: 1,
+    searchQuery: '',
+    currentPictures: '',
+    isLoading: false,
+    showModal: false,
+  };
+
+  componentDidUpdate(prevProps, prevState) {
+    if (prevState.searchQuery !== this.state.searchQuery) {
+      this.fetchImages();
+    }
+  }
+
+  onChangeQuery = query => {
+    this.setState({ searchQuery: query, page: 1, images: [] });
+  };
+
+  fetchImages = () => {
+    const { page, searchQuery } = this.state;
+
+    this.setState({ isLoading: true });
+    imagesApi
+      .fetchImagesApi(searchQuery, page)
+      .then(hits => {
+        this.setState(prevState => ({
+          images: [...prevState.images, ...hits],
+          page: prevState.page + 1,
+        }));
+        window.scrollTo({
+          top: document.documentElement.scrollHeight,
+          behavior: 'smooth',
+        });
+      })
+      .finally(() => this.setState({ isLoading: false }));
+  };
+
+  toggleModal = () => {
+    this.setState(prevState => ({
+      showModal: !prevState.showModal,
+    }));
+  };
+
+  onImgClick = e => {
+    if (e.target.nodeName !== 'IMG') {
+      return;
+    }
+    this.setState({
+      currentPictures: e.target.dataset.img,
+    });
+    this.toggleModal();
+  };
+
+  render() {
+    const { images, isLoading, showModal, currentPictures } = this.state;
+    return (
+      <div className={styles.App}>
+        <Searchbar onSubmit={this.onChangeQuery} />
+
+        <ImageGallery images={images} onImgClick={this.onImgClick} />
+        {showModal && (
+          <Modal onClose={this.toggleModal}>
+            <img src={currentPictures} alt="Dont Worry Be Happy" />
+          </Modal>
+        )}
+        {isLoading && <PreLoader />}
+        {images.length > 0 && !isLoading && (
+          <Button
+            onClick={this.fetchImages}
+            text={isLoading ? 'Loading...' : 'Load more'}
+          />
+        )}
+      </div>
+    );
+  }
 }
 
 export default App;
