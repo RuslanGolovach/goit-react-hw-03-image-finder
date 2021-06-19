@@ -38,10 +38,13 @@ class App extends Component {
           images: [...prevState.images, ...hits],
           page: prevState.page + 1,
         }));
-        window.scrollTo({
-          top: document.documentElement.scrollHeight,
-          behavior: 'smooth',
-        });
+
+        if (this.state.images.length > 12) {
+          window.scrollTo({
+            top: document.documentElement.scrollHeight,
+            behavior: 'smooth',
+          });
+        }
       })
       .finally(() => this.setState({ isLoading: false }));
   };
@@ -69,18 +72,18 @@ class App extends Component {
         <Searchbar onSubmit={this.onChangeQuery} />
 
         <ImageGallery images={images} onImgClick={this.onImgClick} />
-        {showModal && (
-          <Modal onClose={this.toggleModal}>
-            <img src={currentPictures} alt="Dont Worry Be Happy" />
-          </Modal>
-        )}
-        {isLoading && <PreLoader />}
         {images.length > 0 && !isLoading && (
           <Button
             onClick={this.fetchImages}
             text={isLoading ? 'Loading...' : 'Load more'}
           />
         )}
+        {showModal && (
+          <Modal onClose={this.toggleModal}>
+            <img src={currentPictures} alt="#" />
+          </Modal>
+        )}
+        {isLoading && <PreLoader />}
       </div>
     );
   }
